@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Transacciones</title>
+    <style>
+      body {
+          font-family: Arial, sans-serif;
+          margin: 20px;
+      }
+      .error {
+          color: red;
+          font-weight: bold;
+      }
+      form p {
+          margin-bottom: 10px;
+      }
+    </style>
+</head>
+<body>
+    <h1>Transacciones</h1>
+    <h2>Saldo Actual: {{ saldo }}</h2>
+
+    <h3>Agregar Nueva Transacción</h3>
+
+    {% if form.errors %}
+    <div class="error">
+        <ul>
+        {% for field, errors in form.errors.items %}
+            <li>{{ field }}: {{ errors|join:", " }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            {{ form.monto.label_tag }}<br>
+            {{ form.monto }}
+        </p>
+        <p>
+            {{ form.multiplicador.label_tag }}<br>
+            {{ form.multiplicador }}
+        </p>
+        <p>
+            {{ form.tipo.label_tag }}<br>
+            {{ form.tipo }}
+        </p>
+        <p>
+            {{ form.modalidad.label_tag }}<br>
+            {{ form.modalidad }}
+        </p>
+        <p>
+            {{ form.categoria.label_tag }}<br>
+            {{ form.categoria }}
+        </p>
+        <p>
+            {{ form.subcategoria.label_tag }}<br>
+            {{ form.subcategoria }}
+        </p>
+        <p>
+            {{ form.descripcion.label_tag }}<br>
+            {{ form.descripcion }}
+        </p>
+        <button type="submit">Guardar</button>
+    </form>
+
+    <hr>
+    <h3>Historial de Transacciones</h3>
+    {% if transacciones %}
+    <ul>
+        {% for transaccion in transacciones %}
+            <li>
+                {{ transaccion.fecha|date:"d/m/Y H:i" }} -
+                {{ transaccion.categoria.nombre }} -
+                {{ transaccion.monto }} -
+                {{ transaccion.descripcion }}
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No hay transacciones registradas.</p>
+    {% endif %}
+
+    <!-- Script para filtrar dinámicamente categorías y subcategorías -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function(){
+        const tipoSelect = document.getElementById("id_tipo");
+        const modalidadSelect = document.getElementById("id_modalidad");
+        const categoriaSelect = document.getElementById("id_categoria");
+        const subcategoriaSelect = document.getElementById("id_subcategoria");
+
+        // Actualiza la lista de categorías en función de tipo y modalidad.
+        function updateCategorias() {
+            const tipo = tipoSelect.value;
+            const modalidad = modalidadSelect.value;
+            fetch(`/transacciones/filtrar_categorias/?tipo=${tipo}&modalidad=${modalidad}`)
+                .then(response => response.json())
+                .then(data => {
+                    categoriaSelect.innerHTML = "";
+                    subcategoriaSelect.innerHTML = "";
+                    data.categorias.forEach(cat => {
+                        const option = document.createElement("option");
+                        option.value = cat.id;
+                        option.text = cat.nombre;
+                        categoriaSelect.appendChild(option);
+                    });
+                    // Si hay al menos una categoría, actualizamos sus subcategorías
+                    if (categoriaSelect.options.length > 0) {
+                        updateSubcategorias();
+                    }
+                })
+                .catch(error => console.error("Error al filtrar categorías:", error));
+        }
+
+        // Actualiza la lista de subcategorías en función de la categoría seleccionada y la modalidad.
+        function updateSubcategorias() {
+            const categoria = categoriaSelect.value;
+            const modalidad = modalidadSelect.value;
+            fetch(`/transacciones/filtrar_subcategorias/?categoria=${categoria}&modalidad=${modalidad}`)
+                .then(response => response.json())
+                .then(data => {
+                    subcategoriaSelect.innerHTML = "";
+                    data.subcategorias.forEach(sub => {
+                        const option = document.createElement("option");
+                        option.value = sub.id;
+                        option.text = sub.nombre;
+                        subcategoriaSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error al filtrar subcategorías:", error));
+        }
+
+        tipoSelect.addEventListener("change", updateCategorias);
+        modalidadSelect.addEventListener("change", updateCategorias);
+        categoriaSelect.addEventListener("change", updateSubcategorias);
+    });
+    </script>
+</body>
+</html>
