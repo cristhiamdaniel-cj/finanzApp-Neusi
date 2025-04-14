@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Categorías y Subcategorías</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        select, input[type="text"], button {
+            padding: 8px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 400px;
+        }
+        .subtitulo {
+            margin-top: 30px;
+            font-weight: bold;
+        }
+        .mensaje {
+            padding: 10px;
+            background-color: #d4edda;
+            border-left: 5px solid #28a745;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gestión de Categorías y Subcategorías</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mensaje">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="get">
+        <label for="tipo">Tipo:</label><br>
+        <select name="tipo" id="tipo" required>
+            <option value="">-- Selecciona --</option>
+            {% for t in tipos %}
+                <option value="{{ t }}" {% if t == selected_tipo %}selected{% endif %}>{{ t|title }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="modalidad">Modalidad:</label><br>
+        <select name="modalidad" id="modalidad" required>
+            <option value="">-- Selecciona --</option>
+            {% for m in modalidades %}
+                <option value="{{ m }}" {% if m == selected_modalidad %}selected{% endif %}>{{ m|title }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Filtrar</button>
+    </form>
+
+    {% if selected_tipo and selected_modalidad %}
+    <form method="post">
+        {% csrf_token %}
+        <h3 class="subtitulo">Crear Categoría para {{ selected_tipo }} - {{ selected_modalidad }}</h3>
+        <input type="hidden" name="tipo" value="{{ selected_tipo }}">
+        <input type="hidden" name="modalidad" value="{{ selected_modalidad }}">
+        <input type="text" name="nombre_categoria" placeholder="Nombre de la categoría" required>
+        <button type="submit" name="crear_categoria">Crear Categoría</button>
+    </form>
+
+    {% if categorias %}
+    <form method="post">
+        {% csrf_token %}
+        <h3 class="subtitulo">Crear Subcategoría</h3>
+        <label for="categoria_id">Seleccionar Categoría:</label><br>
+        <select name="categoria_id" id="categoria_id" required>
+            {% for c in categorias %}
+                <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_categoria_id %}selected{% endif %}>{{ c.nombre }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="tipo" value="{{ selected_tipo }}">
+        <input type="hidden" name="modalidad" value="{{ selected_modalidad }}">
+        <input type="text" name="nombre_subcategoria" placeholder="Nombre de la subcategoría" required>
+        <button type="submit" name="crear_subcategoria">Crear Subcategoría</button>
+    </form>
+    {% endif %}
+
+    {% if subcategorias %}
+        <h3 class="subtitulo">Subcategorías existentes</h3>
+        <ul>
+            {% for sub in subcategorias %}
+                <li>{{ sub.nombre }} ({{ sub.get_modalidad_display }})</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endif %}
+</body>
+</html>
